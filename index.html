@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Asistencia — Seguimiento Estudiantil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo" id="headerLogo"></div>
+                <div>
+                    <h1>Panel de Asistencia</h1>
+                    <p class="subtitle">Seguimiento detallado de estudiantes · Actualizado: <span
+                            id="lastUpdate"></span></p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="help-guide-btn" onclick="openGuide()" id="guideBtn">Guía</button>
+                <label class="upload-btn" id="uploadLabel">Subir CSV<input type="file" id="csvUpload" accept=".csv"
+                        multiple hidden onchange="handleCSVUpload(event)"></label>
+                <div class="stat-pill"><span class="pill-label">Sesiones</span><span class="pill-value"
+                        id="totalSessions">0</span></div>
+                <div class="stat-pill accent"><span class="pill-label">Estudiantes</span><span class="pill-value"
+                        id="totalStudents">0</span></div>
+            </div>
+        </header>
+
+        <!-- SELECTOR DE INSTITUCIÓN (SG / IETAC) -->
+        <div class="institution-bar" id="institutionSelector"></div>
+
+        <div class="tabs" id="mainTabs"></div>
+
+        <div class="content">
+            <!-- RESUMEN -->
+            <div id="tab-resumen" class="tab-content active">
+                <div class="tab-banner">
+                    <div class="banner-text">
+                        <h2>Resumen General</h2>
+                        <p>Indicadores clave, distribución de permanencia, asistencia por sede y comparación entre
+                            sesiones.</p>
+                    </div>
+                    <button class="banner-help" onclick="showHelp('resumen')">Más información</button>
+                </div>
+                <div class="cards-grid" id="summaryCards"></div>
+                <div class="section-row">
+                    <div class="chart-card">
+                        <div class="card-header-row">
+                            <h3>Distribución de Duración</h3><button class="info-btn"
+                                onclick="showHelp('duracion')">ℹ</button>
+                        </div>
+                        <p class="chart-desc">Registros agrupados por rango de tiempo de permanencia</p>
+                        <div id="durationChart" class="bar-chart"></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header-row">
+                            <h3>Asistencia por Sede</h3><button class="info-btn" onclick="showHelp('sede')">ℹ</button>
+                        </div>
+                        <p class="chart-desc">Estudiantes agrupados por institución de origen</p>
+                        <div id="sedeChart" class="bar-chart"></div>
+                    </div>
+                </div>
+                <div class="section-row">
+                    <div class="chart-card">
+                        <div class="card-header-row">
+                            <h3>Comparativa entre Sesiones</h3><button class="info-btn"
+                                onclick="showHelp('comparativa')">ℹ</button>
+                        </div>
+                        <p class="chart-desc">Asistentes, duración promedio y mediana lado a lado</p>
+                        <div id="compChart" class="comparison-grid"></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header-row">
+                            <h3>Puntualidad General</h3><button class="info-btn"
+                                onclick="showHelp('puntualidad')">ℹ</button>
+                        </div>
+                        <p class="chart-desc">Minutos de retraso respecto al primer ingreso de cada sesión</p>
+                        <div id="punctualityChart" class="bar-chart"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESTADÍSTICAS AVANZADAS -->
+            <div id="tab-estadisticas" class="tab-content">
+                <div class="tab-banner">
+                    <div class="banner-text">
+                        <h2>Estadísticas Avanzadas</h2>
+                        <p>Retención, engagement, horarios de ingreso, deserción y mapa de calor visual.</p>
+                    </div>
+                    <button class="banner-help" onclick="showHelp('estadisticas')">Más información</button>
+                </div>
+                <div class="cards-grid" id="advancedCards"></div>
+                <div class="section-row">
+                    <div class="chart-card">
+                        <div class="card-header-row">
+                            <h3>Retención por Sesión</h3><button class="info-btn"
+                                onclick="showHelp('retencion')">ℹ</button>
+                        </div>
+                        <p class="chart-desc">Porcentaje que permaneció más de 1 hora en cada clase</p>
+                        <div id="retentionChart" class="bar-chart"></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header-row">
+                            <h3>Distribución de Engagement</h3><button class="info-btn"
+                                onclick="showHelp('engagement')">ℹ</button>
+                        </div>
+                        <p class="chart-desc">Estudiantes agrupados por nivel de compromiso (0-100)</p>
+                        <div id="engagementChart" class="bar-chart"></div>
+                    </div>
+                </div>
+                <div class="section-row">
+                    <div class="chart-card">
+                        <div class="card-header-row">
+                            <h3>Mapa de Horarios de Ingreso</h3><button class="info-btn"
+                                onclick="showHelp('horarios')">ℹ</button>
+                        </div>
+                        <p class="chart-desc">Hora del día en que ingresaron los estudiantes</p>
+                        <div id="joinTimeMap" class="bar-chart"></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header-row">
+                            <h3>Deserción Dentro de Sesión</h3><button class="info-btn"
+                                onclick="showHelp('desercion')">ℹ</button>
+                        </div>
+                        <p class="chart-desc">Estudiantes que salieron antes de completar 1 hora</p>
+                        <div id="desertionChart" class="bar-chart"></div>
+                    </div>
+                </div>
+                <div class="chart-card full">
+                    <div class="card-header-row">
+                        <h3>Heatmap de Asistencia</h3><button class="info-btn" onclick="showHelp('heatmap')">ℹ</button>
+                    </div>
+                    <p class="chart-desc">Verde = buena duración · Amarillo = poco tiempo · Rojo/✗ = no asistió</p>
+                    <div id="heatmapContainer" class="heatmap-scroll"></div>
+                </div>
+            </div>
+
+            <!-- SESIONES -->
+            <div id="tab-sesiones" class="tab-content">
+                <div class="tab-banner">
+                    <div class="banner-text">
+                        <h2>Detalle por Sesión</h2>
+                        <p>Selecciona una clase para ver la lista de asistentes con duración, hora de ingreso y salida.
+                        </p>
+                    </div>
+                    <button class="banner-help" onclick="showHelp('sesiones')">Más información</button>
+                </div>
+                <div class="session-selector" id="sessionSelector"></div>
+                <div id="sessionDetail"></div>
+            </div>
+
+            <!-- ESTUDIANTES -->
+            <div id="tab-estudiantes" class="tab-content">
+                <div class="tab-banner">
+                    <div class="banner-text">
+                        <h2>Lista de Estudiantes</h2>
+                        <p>Filtra por sede o estado, ordena por columna, marca como contactado o exporta los datos.</p>
+                    </div>
+                    <button class="banner-help" onclick="showHelp('estudiantes')">Más información</button>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Buscar por nombre o correo..."
+                        oninput="filterStudents()">
+                    <select id="filterSede" onchange="filterStudents()">
+                        <option value="">Todas las sedes</option>
+                    </select>
+                    <select id="filterStatus" onchange="filterStudents()">
+                        <option value="">Todos</option>
+                        <option value="excellent">Excelente</option>
+                        <option value="warning">Atención</option>
+                        <option value="risk">Riesgo</option>
+                    </select>
+                    <button class="export-btn" onclick="exportCSV()" id="csvBtn">CSV</button>
+                    <button class="export-btn excel" onclick="exportExcelByInstitution()" id="excelBtn">Excel por
+                        Sede</button>
+                </div>
+                <div class="table-wrapper">
+                    <table id="studentTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">Estudiante ↕</th>
+                                <th onclick="sortTable(1)">Sede ↕</th>
+                                <th onclick="sortTable(2)">Sesiones ↕</th>
+                                <th onclick="sortTable(3)">Prom. Duración ↕</th>
+                                <th onclick="sortTable(4)">Asistencia ↕</th>
+                                <th onclick="sortTable(5)">Engagement ↕</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RANKING POR CLASE -->
+            <div id="tab-ranking" class="tab-content">
+                <div class="tab-banner">
+                    <div class="banner-text">
+                        <h2>Ranking por Clase</h2>
+                        <p>Selecciona una clase para ver quién permaneció más, quién llegó primero y quién salió antes.
+                            La vista global muestra rankings acumulados.</p>
+                    </div>
+                    <button class="banner-help" onclick="showHelp('ranking')">Más información</button>
+                </div>
+                <div class="ranking-class-selector" id="rankingClassSelector"></div>
+                <div id="rankingClassInfo"></div>
+                <div class="section-row" id="rankingContent"></div>
+            </div>
+
+            <!-- ALERTAS -->
+            <div id="tab-alertas" class="tab-content">
+                <div class="tab-banner">
+                    <div class="banner-text">
+                        <h2>Sistema de Alertas</h2>
+                        <p>Clasificación automática: riesgo alto (&lt;50% asistencia), permanencia corta (&lt;45 min
+                            promedio), excelentes (100% + alta duración).</p>
+                    </div>
+                    <button class="banner-help" onclick="showHelp('alertas')">Más información</button>
+                </div>
+                <div class="cards-grid" id="alertSummary"></div>
+                <div class="alerts-grid">
+                    <div class="alert-section danger">
+                        <h3><span class="dot red"></span> Riesgo Alto</h3>
+                        <p class="alert-desc">Asistencia &lt; 50% de las sesiones</p>
+                        <div id="highRisk"></div>
+                    </div>
+                    <div class="alert-section warning">
+                        <h3><span class="dot yellow"></span> Permanencia Corta</h3>
+                        <p class="alert-desc">Promedio &lt; 45 min por sesión</p>
+                        <div id="medRisk"></div>
+                    </div>
+                    <div class="alert-section success">
+                        <h3><span class="dot green"></span> Excelente</h3>
+                        <p class="alert-desc">100% asistencia + &gt; 1.5h promedio</p>
+                        <div id="excellent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ESTUDIANTE -->
+    <div id="studentModal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+        <div class="modal"><button class="modal-close" onclick="closeModal()">✕</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- MODAL DE AYUDA -->
+    <div id="helpModal" class="modal-overlay" onclick="if(event.target===this)closeHelp()">
+        <div class="modal help-modal"><button class="modal-close" onclick="closeHelp()">✕</button>
+            <div id="helpContent"></div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/data-manager.js"></script>
+    <script src="js/ui-render.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Initialize icons in header/tabs after DOM is ready -->
+    <script>
+        document.getElementById('headerLogo').innerHTML = icon('bar-chart', 24);
+        document.getElementById('guideBtn').innerHTML = icon('help', 16) + ' Guía';
+        document.getElementById('uploadLabel').innerHTML = icon('upload', 16) + ' Subir CSV' + '<input type="file" id="csvUpload" accept=".csv" multiple hidden onchange="handleCSVUpload(event)">';
+        document.getElementById('csvBtn').innerHTML = icon('download', 14) + ' CSV';
+        document.getElementById('excelBtn').innerHTML = icon('spreadsheet', 14) + ' Excel por Sede';
+        const tabs = [
+            { id: 'resumen', icon: 'dashboard', label: 'Resumen' },
+            { id: 'estadisticas', icon: 'trending-up', label: 'Estadísticas' },
+            { id: 'sesiones', icon: 'calendar', label: 'Sesiones' },
+            { id: 'estudiantes', icon: 'users', label: 'Estudiantes' },
+            { id: 'ranking', icon: 'trophy', label: 'Ranking' },
+            { id: 'alertas', icon: 'alert', label: 'Alertas' }
+        ];
+        document.getElementById('mainTabs').innerHTML = tabs.map((t, i) =>
+            `<button class="tab ${i === 0 ? 'active' : ''}" data-tab="${t.id}" onclick="switchTab('${t.id}')">${icon(t.icon, 16)} ${t.label}</button>`
+        ).join('');
+    </script>
+</body>
+
+</html>

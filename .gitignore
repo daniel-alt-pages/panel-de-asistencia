@@ -1,0 +1,17 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Script de generación (no necesario en producción)
+generate-data.ps1
+
+# Carpeta de CSVs fuente (datos sensibles)
+Areas-cuantificadas/
+
+# IDE
+.vscode/
+.idea/
+
+# Gemini
+.gemini/
